@@ -22,6 +22,8 @@ const languages = [
   'Rust',
 ]
 
+import { fetchReposForLanguage } from '../api/github'
+
 const selected = ref(languages[0])
 const loading = ref(false)
 const error = ref('')
@@ -41,42 +43,7 @@ function repoCardData(r) {
   }
 }
 
-async function fetchReposForLanguage(language) {
-  loading.value = true
-  error.value = ''
-  repos.value = []
-  current.value = null
-
-  try {
-    const q = encodeURIComponent(`language:${language}`)
-    const url = `https://api.github.com/search/repositories?q=${q}&sort=stars&order=desc&per_page=100`
-    const res = await fetch(url, {
-      headers: { Accept: 'application/vnd.github.v3+json' },
-    })
-
-    if (!res.ok) {
-      if (res.status === 403) {
-        throw new Error('Rate limit exceeded or access forbidden. Try again later.')
-      }
-      const text = await res.text()
-      throw new Error(`GitHub API error: ${res.status} ${text}`)
-    }
-
-    const data = await res.json()
-
-    if (!data.items || data.items.length === 0) {
-      error.value = `No repositories found for ${language}.`
-      return
-    }
-
-    repos.value = data.items
-    pickRandomFromRepos()
-  } catch (err) {
-    error.value = err.message || String(err)
-  } finally {
-    loading.value = false
-  }
-}
+// fetch logic moved to src/api/github.js
 
 function pickRandomFromRepos() {
   if (!repos.value || repos.value.length === 0) {
@@ -92,7 +59,25 @@ function pickRandomFromRepos() {
 const hasResult = computed(() => !!current.value)
 
 async function onFindClick() {
-  await fetchReposForLanguage(selected.value)
+  loading.value = true
+  error.value = ''
+  repos.value = []
+  current.value = null
+
+  try {
+    const items = await fetchReposForLanguage(selected.value)
+    if (!items || items.length === 0) {
+      error.value = `No repositories found for ${selected.value}.`
+      return
+    }
+
+    repos.value = items
+    pickRandomFromRepos()
+  } catch (err) {
+    error.value = err.message || String(err)
+  } finally {
+    loading.value = false
+  }
 }
 
 function onAnotherClick() {
