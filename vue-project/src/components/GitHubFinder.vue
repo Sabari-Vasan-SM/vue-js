@@ -108,106 +108,82 @@ function onAnotherClick() {
 
 <template>
   <div class="glass-finder">
-    <div class="panel">
-      <header class="panel-header">
+    <div class="panel" role="region" aria-label="GitHub repository finder">
+      <header>
         <h2 class="title">{{ msg }}</h2>
-        <p class="subtitle">Pick a language and discover a random top GitHub repository.</p>
+        <p class="subtitle muted" style="margin:0.25rem 0 0;">Pick a language and get a random repo.</p>
       </header>
 
-      <div class="controls">
-        <label class="sr-only" for="language">Language</label>
-        <select id="language" v-model="selected" class="select">
-          <option v-for="lang in languages" :key="lang" :value="lang">{{ lang }}</option>
-        </select>
+      <div class="ui form" style="margin-top:0.8rem">
+        <div class="fields" style="align-items:center;gap:0.6rem;display:flex;flex-wrap:wrap">
+          <div class="field" style="min-width:160px">
+            <label class="visually-hidden" for="language">Language</label>
+            <select id="language" v-model="selected" class="ui dropdown" aria-label="Select language">
+              <option v-for="lang in languages" :key="lang" :value="lang">{{ lang }}</option>
+            </select>
+          </div>
 
-        <div class="btns">
-          <button class="btn primary" @click="onFindClick" :disabled="loading">Find</button>
-          <button class="btn" @click="onAnotherClick" :disabled="loading || !hasResult">Another</button>
+          <div class="field" style="display:flex;gap:0.5rem">
+            <button class="ui primary button" @click="onFindClick" :disabled="loading" aria-live="polite">
+              <i v-if="!loading" class="search icon"></i>
+              <i v-else class="spinner loading icon"></i>
+              <span>{{ loading ? 'Loading' : 'Find' }}</span>
+            </button>
+
+            <button class="ui button" @click="onAnotherClick" :disabled="loading || !hasResult">Another</button>
+          </div>
         </div>
       </div>
 
-      <div class="status">
-        <p v-if="loading" class="loading">Searching GitHub…</p>
-        <p v-if="error" class="error">{{ error }}</p>
+      <div class="status" style="margin-top:0.6rem">
+        <p v-if="loading" class="loading muted">Searching…</p>
+        <p v-if="error" class="error" role="alert">{{ error }}</p>
       </div>
 
-      <article v-if="hasResult" class="repo">
-        <h3 class="repo-name"><a :href="current.url" target="_blank" rel="noopener">{{ current.name }}</a></h3>
-        <p class="repo-desc">{{ current.description || 'No description' }}</p>
+      <div v-if="hasResult" class="ui segment" style="margin-top:0.9rem;padding:0.7rem">
+        <div class="ui grid">
+          <div class="twelve wide column">
+            <a :href="current.url" target="_blank" rel="noopener" class="ui header" style="margin:0;font-size:1rem">{{ current.name }}</a>
+            <div class="description" style="margin-top:0.35rem;color:var(--muted)">{{ current.description || 'No description.' }}</div>
+          </div>
+          <div class="four wide column" style="display:flex;align-items:center;justify-content:flex-end;gap:0.8rem">
+            <div class="ui small labels">
+              <a class="ui basic label">⭐ {{ current.stars }}</a>
+              <a class="ui basic label">🍴 {{ current.forks }}</a>
+              <a class="ui basic label">🐞 {{ current.openIssues }}</a>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        <ul class="repo-meta">
-          <li>⭐ {{ current.stars }}</li>
-          <li>🍴 {{ current.forks }}</li>
-          <li>🐞 {{ current.openIssues }}</li>
-          <li v-if="current.language">🧩 {{ current.language }}</li>
-        </ul>
-      </article>
-
-      <p v-else-if="!loading && !error" class="hint">Select a language and tap Find to get started.</p>
+      <p v-else-if="!loading && !error" class="hint muted" style="margin-top:0.9rem">Select a language and click Find.</p>
     </div>
   </div>
 </template>
 
 <style scoped>
-:root {
-  --glass-bg: rgba(255,255,255,0.55);
-  --glass-border: rgba(255,255,255,0.6);
-  --muted: rgba(0,0,0,0.55);
-}
+.glass-finder { display:flex; justify-content:center; padding:0.6rem 0 }
+.panel { width:100%; max-width:720px; padding:0.6rem 0; border-radius:8px; background:transparent; border:0 }
 
-.glass-finder {
-  display: flex;
-  justify-content: center;
-  padding: 1.5rem;
-}
+.title { margin:0; font-size:1.05rem; font-weight:600 }
+.subtitle { margin:0; color:var(--muted); font-size:0.95rem }
 
-.panel {
-  width: 100%;
-  max-width: 720px;
-  padding: 1.25rem;
-  border-radius: 16px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.42), rgba(255,255,255,0.28));
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-  backdrop-filter: blur(12px) saturate(130%);
-  -webkit-backdrop-filter: blur(12px) saturate(130%);
-}
+.controls { display:flex; gap:0.5rem; align-items:center }
+.select { padding:0.38rem 0.5rem; border-radius:8px; border:1px solid rgba(0,0,0,0.08); background:transparent }
+.btn-primary { padding:0.4rem 0.65rem; border-radius:8px; border:1px solid var(--accent-500); background:transparent; color:var(--accent-500); cursor:pointer }
+.btn-ghost { padding:0.36rem 0.6rem; border-radius:8px; border:1px solid rgba(0,0,0,0.06); background:transparent; cursor:pointer }
+.btn-primary:disabled, .btn-ghost:disabled { opacity:0.5; cursor:not-allowed }
 
-.panel-header { margin-bottom: 0.75rem }
-.title { margin: 0; font-size: 1.25rem; font-weight: 600 }
-.subtitle { margin: 0.25rem 0 0; color: var(--muted); font-size: 0.9rem }
+.status { margin-top:0.5rem }
+.loading { color:var(--muted) }
+.error { color:#b00020 }
 
-.controls { display:flex; gap:0.75rem; align-items:center; margin-top:1rem; flex-wrap:wrap }
-.select {
-  padding: 0.5rem 0.6rem;
-  border-radius: 10px;
-  border: 1px solid rgba(0,0,0,0.06);
-  background: rgba(255,255,255,0.6);
-  min-width: 180px;
-}
+.repo { margin-top:0.6rem; padding:0.5rem 0 }
+.repo-name a { color:inherit; text-decoration:underline }
+.repo-desc { margin:0.35rem 0 0 }
 
-.btns { display:flex; gap:0.5rem }
-.btn { padding: 0.5rem 0.9rem; border-radius: 10px; border: none; background: rgba(255,255,255,0.72); cursor: pointer }
-.btn.primary { background: linear-gradient(180deg, rgba(10,132,255,0.95), rgba(0,122,255,0.9)); color: white; box-shadow: 0 6px 18px rgba(0,122,255,0.18) }
-.btn:disabled { opacity: 0.6; cursor: not-allowed }
+.hint { margin-top:0.6rem; color:var(--muted) }
 
-.status { margin-top: 0.75rem }
-.loading { color: rgba(0,0,0,0.65) }
-.error { color: #b00020 }
-
-.repo { margin-top: 1rem; padding: 0.9rem; border-radius: 12px; background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.45)); border: 1px solid rgba(255,255,255,0.5) }
-.repo-name { margin: 0 0 0.4rem; font-size: 1rem }
-.repo-name a { color: #0a84ff; text-decoration: none }
-.repo-desc { margin: 0 0 0.6rem; color: var(--muted) }
-.repo-meta { list-style:none; padding:0; margin:0; display:flex; gap:1rem; font-size:0.95rem }
-
-.hint { margin-top: 1rem; color: var(--muted) }
-
-.sr-only { position: absolute !important; height: 1px; width: 1px; overflow: hidden; clip: rect(1px, 1px, 1px, 1px); white-space: nowrap }
-
-@media (min-width: 768px) {
-  .panel { padding: 1.5rem }
-  .title { font-size: 1.5rem }
-}
+@media (min-width:768px) { .panel { padding:0.8rem 0 } }
 
 </style>
