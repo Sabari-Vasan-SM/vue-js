@@ -2,7 +2,15 @@
 import { ref, onMounted } from 'vue'
 import { fetchCryptoPrice } from '../api/coindesk'
 
-const msg = 'Real-Time Crypto Price (BTC/USD)'
+const msg = 'Real-Time Crypto Price'
+const instruments = [
+  { label: 'BTC / USD', value: 'BTC-USD' },
+  { label: 'ETH / USD', value: 'ETH-USD' },
+  { label: 'SOL / USD', value: 'SOL-USD' },
+  { label: 'XRP / USD', value: 'XRP-USD' },
+  { label: 'DOGE / USD', value: 'DOGE-USD' },
+]
+const selected = ref(instruments[0].value)
 const price = ref(null)
 const updated = ref('')
 const loading = ref(false)
@@ -12,7 +20,7 @@ async function loadPrice() {
   loading.value = true
   error.value = ''
   try {
-    const data = await fetchCryptoPrice('BTC')
+    const data = await fetchCryptoPrice(selected.value)
     price.value = data.price
     updated.value = data.updated
   } catch (err) {
@@ -38,6 +46,15 @@ onMounted(() => {
         <p class="subtitle muted" style="margin:0.25rem 0 0;">Powered by CoinDesk API. Updates every 30 seconds.</p>
       </header>
 
+      <div class="ui form" style="margin-top:1.2rem;max-width:340px">
+        <div class="field">
+          <label for="instrument">Select Pair</label>
+          <select id="instrument" v-model="selected" class="ui dropdown" @change="loadPrice">
+            <option v-for="inst in instruments" :key="inst.value" :value="inst.value">{{ inst.label }}</option>
+          </select>
+        </div>
+      </div>
+
       <div class="ui segment" style="margin-top:1.2rem;min-width:260px;max-width:340px">
         <div class="ui statistic" style="margin-bottom:0">
           <div class="value" style="font-size:2.2rem">
@@ -45,7 +62,7 @@ onMounted(() => {
             <span v-else-if="price !== null">${{ price.toLocaleString(undefined, {maximumFractionDigits:2}) }}</span>
             <span v-else>-</span>
           </div>
-          <div class="label">BTC / USD</div>
+          <div class="label">{{ instruments.find(i => i.value === selected)?.label || selected }}</div>
         </div>
         <div class="ui mini horizontal label" v-if="updated" style="margin-top:0.7rem">Last updated: {{ new Date(updated).toLocaleTimeString() }}</div>
         <div v-if="error" class="ui red message" style="margin-top:0.7rem">{{ error }}</div>

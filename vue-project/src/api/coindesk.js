@@ -2,27 +2,43 @@
 // Docs: https://www.coindesk.com/coindesk-api/
 
 // Fetches current price for a given currency (e.g., 'BTC', 'ETH') in USD
-export async function fetchCryptoPrice(symbol = 'BTC') {
-  // CoinDesk only supports BTC/USD directly, for ETH and others use other APIs or mock
-  if (symbol !== 'BTC') {
-    throw new Error('CoinDesk API only supports BTC/USD directly. For other coins, use another API.')
-  }
-  const url = 'https://api.coindesk.com/v1/bpi/currentprice/USD.json'
-  const headers = {}
-  // Support API key via VITE_COINDESK_API_KEY
+export async function fetchCryptoPrice(symbol = 'BTC-USD') {
+  // Uses CoinDesk Data API v1: https://data-api.coindesk.com/index/cc/v1/latest/tick
+  // symbol should be like 'BTC-USD', 'ETH-USD', etc.
+  const apiKey = import.meta.env.VITE_COINDESK_API_KEY
+  if (!apiKey) throw new Error('API key missing. Set VITE_COINDESK_API_KEY in your .env file.')
+  const url = `https://data-api.coindesk.com/index/cc/v1/latest/tick?market=ccix&instruments=${encodeURIComponent(symbol)}`
+  const headers = { 'x-api-key': apiKey }
+  let res
   try {
-    const key = import.meta.env.VITE_COINDESK_API_KEY
-    if (key) headers['Authorization'] = `Bearer ${key}`
-  } catch (e) {}
-  const res = await fetch(url, { headers })
-  if (!res.ok) {
-    throw new Error('Failed to fetch from CoinDesk API')
+    res = await fetch(url, { headers })
+  } catch (err) {
+    throw new Error('Network error: ' + (err.message || err))
   }
-  const data = await res.json()
-  // Structure: data.bpi.USD.rate_float
-  return {
-    symbol: 'BTC',
-    price: data.bpi.USD.rate_float,
-    updated: data.time.updatedISO
+
+
+
+// Fetch all available fields for a given instrument from CoinDesk Data API
+export async function fetchCryptoStats(symbol) {
+  const apiKey = import.meta.env.VITE_COINDESK_API_KEY;
+  const url = `https://data-api.coindesk.com/index/cc/v1/latest/tick?market=ccix&instruments=${symbol}`;
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'x-api-key': apiKey
+      }
+    });
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    const data = await response.json();
+    if (data.Err && Object.keys(data.Err).length > 0) {
+      throw new Error(data.Err.message || 'Unknown API error');
+    }
+    // Return all fields for the symbol
+    return data.Data[symbol];
+  } catch (error) {
+    throw new Error(error.message || 'Failed to fetch crypto stats');
   }
+}
 }
