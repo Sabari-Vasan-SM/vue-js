@@ -26,7 +26,6 @@ async function loadPrice() {
 
 onMounted(() => {
   loadPrice()
-  // Optionally, poll every 30s for real-time updates
   setInterval(loadPrice, 30000)
 })
 </script>
@@ -61,23 +60,4 @@ onMounted(() => {
 
 .title { margin:0; font-size:1.05rem; font-weight:600 }
 .subtitle { margin:0; color:var(--muted); font-size:0.95rem }
-
-.controls { display:flex; gap:0.5rem; align-items:center }
-.select { padding:0.38rem 0.5rem; border-radius:8px; border:1px solid rgba(0,0,0,0.08); background:transparent }
-.btn-primary { padding:0.4rem 0.65rem; border-radius:8px; border:1px solid var(--accent-500); background:transparent; color:var(--accent-500); cursor:pointer }
-.btn-ghost { padding:0.36rem 0.6rem; border-radius:8px; border:1px solid rgba(0,0,0,0.06); background:transparent; cursor:pointer }
-.btn-primary:disabled, .btn-ghost:disabled { opacity:0.5; cursor:not-allowed }
-
-.status { margin-top:0.5rem }
-.loading { color:var(--muted) }
-.error { color:#b00020 }
-
-.repo { margin-top:0.6rem; padding:0.5rem 0 }
-.repo-name a { color:inherit; text-decoration:underline }
-.repo-desc { margin:0.35rem 0 0 }
-
-.hint { margin-top:0.6rem; color:var(--muted) }
-
-@media (min-width:768px) { .panel { padding:0.8rem 0 } }
-
 </style>
