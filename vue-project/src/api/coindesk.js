@@ -2,21 +2,7 @@
 // Docs: https://www.coindesk.com/coindesk-api/
 
 // Fetches current price for a given currency (e.g., 'BTC', 'ETH') in USD
-export async function fetchCryptoPrice(symbol = 'BTC-USD') {
-  // Uses CoinDesk Data API v1: https://data-api.coindesk.com/index/cc/v1/latest/tick
-  // symbol should be like 'BTC-USD', 'ETH-USD', etc.
-  const apiKey = import.meta.env.VITE_COINDESK_API_KEY
-  if (!apiKey) throw new Error('API key missing. Set VITE_COINDESK_API_KEY in your .env file.')
-  const url = `https://data-api.coindesk.com/index/cc/v1/latest/tick?market=ccix&instruments=${encodeURIComponent(symbol)}`
-  const headers = { 'x-api-key': apiKey }
-  let res
-  try {
-    res = await fetch(url, { headers })
-  } catch (err) {
-    throw new Error('Network error: ' + (err.message || err))
-  }
-
-
+// (fetchCryptoPrice is deprecated; use fetchCryptoStats instead)
 
 // Fetch all available fields for a given instrument from CoinDesk Data API
 export async function fetchCryptoStats(symbol) {
@@ -40,5 +26,4 @@ export async function fetchCryptoStats(symbol) {
   } catch (error) {
     throw new Error(error.message || 'Failed to fetch crypto stats');
   }
-}
 }
