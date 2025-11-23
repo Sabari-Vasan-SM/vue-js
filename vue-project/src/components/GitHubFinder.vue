@@ -1,147 +1,56 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, onMounted } from 'vue'
+import { fetchCryptoPrice } from '../api/coindesk'
 
-defineProps({
-  msg: {
-    type: String,
-    required: false,
-    default: 'GitHub Random Repository Finder',
-  },
-})
-
-const languages = [
-  'JavaScript',
-  'TypeScript',
-  'Python',
-  'Java',
-  'Go',
-  'Ruby',
-  'PHP',
-  'C++',
-  'C#',
-  'Rust',
-]
-
-import { fetchReposForLanguage } from '../api/github'
-
-const selected = ref(languages[0])
+const msg = 'Real-Time Crypto Price (BTC/USD)'
+const price = ref(null)
+const updated = ref('')
 const loading = ref(false)
 const error = ref('')
-const repos = ref([])
-const current = ref(null)
 
-function repoCardData(r) {
-  if (!r) return null
-  return {
-    name: r.full_name,
-    url: r.html_url,
-    description: r.description,
-    stars: r.stargazers_count,
-    forks: r.forks_count,
-    openIssues: r.open_issues_count,
-    language: r.language,
-  }
-}
-
-// fetch logic moved to src/api/github.js
-
-function pickRandomFromRepos() {
-  if (!repos.value || repos.value.length === 0) {
-    current.value = null
-    error.value = 'No repositories available to pick from.'
-    return
-  }
-
-  const i = Math.floor(Math.random() * repos.value.length)
-  current.value = repoCardData(repos.value[i])
-}
-
-const hasResult = computed(() => !!current.value)
-
-async function onFindClick() {
+async function loadPrice() {
   loading.value = true
   error.value = ''
-  repos.value = []
-  current.value = null
-
   try {
-    const items = await fetchReposForLanguage(selected.value)
-    if (!items || items.length === 0) {
-      error.value = `No repositories found for ${selected.value}.`
-      return
-    }
-
-    repos.value = items
-    pickRandomFromRepos()
+    const data = await fetchCryptoPrice('BTC')
+    price.value = data.price
+    updated.value = data.updated
   } catch (err) {
     error.value = err.message || String(err)
+    price.value = null
+    updated.value = ''
   } finally {
     loading.value = false
   }
 }
 
-function onAnotherClick() {
-  if (repos.value && repos.value.length > 1) {
-    pickRandomFromRepos()
-  } else if (repos.value && repos.value.length === 1) {
-    error.value = 'Only one repository in the results — cannot pick another.'
-  } else {
-    fetchReposForLanguage(selected.value)
-  }
-}
+onMounted(() => {
+  loadPrice()
+  // Optionally, poll every 30s for real-time updates
+  setInterval(loadPrice, 30000)
+})
 </script>
 
 <template>
   <div class="glass-finder">
-    <div class="panel" role="region" aria-label="GitHub repository finder">
+    <div class="panel" role="region" aria-label="Crypto price viewer">
       <header>
         <h2 class="title">{{ msg }}</h2>
-        <p class="subtitle muted" style="margin:0.25rem 0 0;">Pick a language and get a random repo.</p>
+        <p class="subtitle muted" style="margin:0.25rem 0 0;">Powered by CoinDesk API. Updates every 30 seconds.</p>
       </header>
 
-      <div class="ui form" style="margin-top:0.8rem">
-        <div class="fields" style="align-items:center;gap:0.6rem;display:flex;flex-wrap:wrap">
-          <div class="field" style="min-width:160px">
-            <label class="visually-hidden" for="language">Language</label>
-            <select id="language" v-model="selected" class="ui dropdown" aria-label="Select language">
-              <option v-for="lang in languages" :key="lang" :value="lang">{{ lang }}</option>
-            </select>
+      <div class="ui segment" style="margin-top:1.2rem;min-width:260px;max-width:340px">
+        <div class="ui statistic" style="margin-bottom:0">
+          <div class="value" style="font-size:2.2rem">
+            <span v-if="loading"><i class="notched circle loading icon"></i></span>
+            <span v-else-if="price !== null">${{ price.toLocaleString(undefined, {maximumFractionDigits:2}) }}</span>
+            <span v-else>-</span>
           </div>
-
-          <div class="field" style="display:flex;gap:0.5rem">
-            <button class="ui primary button" @click="onFindClick" :disabled="loading" aria-live="polite">
-              <i v-if="!loading" class="search icon"></i>
-              <i v-else class="spinner loading icon"></i>
-              <span>{{ loading ? 'Loading' : 'Find' }}</span>
-            </button>
-
-            <button class="ui button" @click="onAnotherClick" :disabled="loading || !hasResult">Another</button>
-          </div>
+          <div class="label">BTC / USD</div>
         </div>
+        <div class="ui mini horizontal label" v-if="updated" style="margin-top:0.7rem">Last updated: {{ new Date(updated).toLocaleTimeString() }}</div>
+        <div v-if="error" class="ui red message" style="margin-top:0.7rem">{{ error }}</div>
       </div>
-
-      <div class="status" style="margin-top:0.6rem">
-        <p v-if="loading" class="loading muted">Searching…</p>
-        <p v-if="error" class="error" role="alert">{{ error }}</p>
-      </div>
-
-      <div v-if="hasResult" class="ui segment" style="margin-top:0.9rem;padding:0.7rem">
-        <div class="ui grid">
-          <div class="twelve wide column">
-            <a :href="current.url" target="_blank" rel="noopener" class="ui header" style="margin:0;font-size:1rem">{{ current.name }}</a>
-            <div class="description" style="margin-top:0.35rem;color:var(--muted)">{{ current.description || 'No description.' }}</div>
-          </div>
-          <div class="four wide column" style="display:flex;align-items:center;justify-content:flex-end;gap:0.8rem">
-            <div class="ui small labels">
-              <a class="ui basic label">⭐ {{ current.stars }}</a>
-              <a class="ui basic label">🍴 {{ current.forks }}</a>
-              <a class="ui basic label">🐞 {{ current.openIssues }}</a>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <p v-else-if="!loading && !error" class="hint muted" style="margin-top:0.9rem">Select a language and click Find.</p>
     </div>
   </div>
 </template>

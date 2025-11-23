@@ -1,12 +1,12 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
-import GitHubFinder from './components/GitHubFinder.vue'
+import CryptoPrice from './components/CryptoPrice.vue'
 </script>
 
 <template>
   <div class="app-shell">
     <main class="minimal-panel">
-      <GitHubFinder msg="Discover a random repo" />
+      <CryptoPrice />
     </main>
 
     <footer class="app-footer muted" aria-label="site navigation">
